@@ -1,0 +1,4 @@
+interface:
+  display_name: "Java Spring Boot Backend"
+  short_description: "Java 17 Spring Boot backend stack guidance for media-gateway"
+  default_prompt: "Use $java-springboot-backend to implement a Java 17 Spring Boot API in media-gateway that follows the project BaseResponse, snake_case, session-token auth and pagination conventions."
