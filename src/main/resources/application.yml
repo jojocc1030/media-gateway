@@ -1,0 +1,93 @@
+#file: noinspection YAMLSchemaValidation
+spring:
+  application:
+    name: media-gateway
+  # jar 同级 config/application.yml 可覆盖（外部配置优先于 jar 内默认值）
+  config:
+    import: optional:file:./config/application.yml
+  datasource:
+    url: ${MGW_DB_URL:jdbc:postgresql://localhost:5432/media_gateway_db}
+    username: ${MGW_DB_USERNAME:postgres}
+    password: ${MGW_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 300000
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  data:
+    redis:
+      host: ${MGW_REDIS_HOST:localhost}
+      port: ${MGW_REDIS_PORT:6379}
+      database: ${MGW_REDIS_DB:3}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+
+mgw:
+  app:
+    version: ${MGW_VERSION:dev}
+  http:
+    connect-timeout-millis: ${MGW_HTTP_CONNECT_TIMEOUT_MILLIS:3000}
+    read-timeout-millis: ${MGW_HTTP_READ_TIMEOUT_MILLIS:10000}
+  security:
+    role-check-enabled: true
+    # 无需登录即可访问的路径（应用内相对路径，支持 Ant 风格）
+    public-paths:
+      - /health
+      - /api/auth/login
+      - /api/public/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-ui.html
+    session:
+      ttl-seconds: ${MGW_SESSION_TTL_SECONDS:7200}
+      refresh-on-access: true
+    # 开发用账号，密码为 PBKDF2 哈希；生产环境务必通过外部配置覆盖或接入真实身份系统。
+    # 环境变量覆盖示例：MGW_SECURITY_USERS_0_PASSWORDHASH=...
+    users:
+      - username: admin
+        password-hash: "pbkdf2$210000$IQ9UDKfNfGTLjZy7Uj4kIA==$RBZ+DKTrfyMMTtmV92Mb8y5FtJ0umjHX/G8TNhdVsDY="
+        roles: [ADMIN, OPERATOR]
+      - username: viewer
+        password-hash: "pbkdf2$210000$OosZfPYKkS2AUV9g1t3rSg==$YVR6IgpfzrQ/w1i+18dXdpL54nXJHVieZudpUDGrXp8="
+        roles: [VIEWER]
+
+springdoc:
+  api-docs:
+    enabled: ${MGW_API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${MGW_API_DOCS_ENABLED:true}
+    path: /swagger-ui.html
+
+server:
+  port: ${MGW_PORT:10040}
+  servlet:
+    context-path: ${MGW_CONTEXT_PATH:/mgw}
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  shutdown: graceful
+
+logging:
+  level:
+    com.gjsk.mediagateway: DEBUG

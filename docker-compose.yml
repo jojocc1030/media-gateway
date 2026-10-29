@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: media-gateway-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-media_gateway_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-media_gateway_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: media-gateway-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: media-gateway
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MGW_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-media_gateway_db}
+      MGW_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      MGW_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      MGW_REDIS_HOST: redis
+      MGW_REDIS_PORT: "6379"
+      MGW_CONTEXT_PATH: /mgw
+    ports:
+      - "10040:10040"
+
+volumes:
+  pgdata:

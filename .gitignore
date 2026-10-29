@@ -1,0 +1,41 @@
+# === Maven ===
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# === IDE ===
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+logs/
+*.log
+
+# === Environment ===
+.env
+.env.local
+.env.*.local
+config/application.yml
+
+# === Spring Boot ===
+*.jar
+!gradle-wrapper.jar
+
+# === docs ===
+docs/require/
+docs/design/

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+        日志格式要素说明（与 magpie 保持一致）:
+        %d{ISO8601}     时间戳，精确到毫秒，带时区
+        %-5level        日志级别，左对齐占5位
+        %thread         线程名
+        %X{traceId}     请求链路追踪ID (MDC)
+        %X{userId}      当前用户ID (MDC，未认证时为空)
+        %logger{36}     Logger名，超过36字符截断前段包名
+        %method         方法名
+        %line           行号
+        %msg            日志内容
+        %n              换行
+        %highlight      级别着色
+        %ex             异常堆栈
+    -->
+
+    <!-- ========== 可覆盖属性 ========== -->
+    <property name="LOG_PATH" value="${LOG_PATH:-./logs}"/>
+    <property name="LOG_FILE" value="${LOG_FILE:-media-gateway}"/>
+    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] [%X{traceId}] [%X{userId:-}] %logger{36}.%method\(%line\) - %msg%n"/>
+    <property name="FILE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{traceId}] [%X{userId:-}] %logger{36}.%method\(%line\) - %msg%n%ex"/>
+
+    <!-- ========== 控制台输出 ========== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ========== 文件输出（按天+大小滚动，保留30天） ========== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE}.log</file>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>${FILE_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/%d{yyyy-MM-dd}/${LOG_FILE}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ========== 异步包装（减少日志I/O对业务的阻塞） ========== -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <neverBlock>true</neverBlock>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <!-- ========== 日志级别 ========== -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    <logger name="org.apache" level="WARN"/>
+
+    <!-- 业务：DEBUG -->
+    <logger name="com.gjsk.mediagateway" level="DEBUG"/>
+    <!-- 安全相关：DEBUG，便于审计 -->
+    <logger name="com.gjsk.mediagateway.security" level="DEBUG"/>
+
+    <!-- ========== 根Logger ========== -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </root>
+</configuration>
